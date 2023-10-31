@@ -20,6 +20,10 @@ class Group(models.Model):
     )
     description = models.TextField('Описание')
 
+    class Meta:
+        verbose_name = 'группа'
+        verbose_name_plural = 'Группы'
+
     def __str__(self):
         return self.title[:TEXT_REPRESENTATION_LENGTH]
 
@@ -44,7 +48,7 @@ class Post(models.Model):
     )
 
     class Meta:
-        ordering = ('id',)
+        ordering = ('pub_date',)
         default_related_name = 'posts'
         verbose_name = 'пост'
         verbose_name_plural = 'Посты'
@@ -93,12 +97,22 @@ class Follow(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='following',
-        verbose_name='Подписан',
+        verbose_name='Подписан на',
     )
 
     class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'following'], name='user_following'
-            )
+                fields=['user', 'following'],
+                name='user_following_unique_relationships',
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('following')),
+                name="user_following_prevent_self_follow",
+            ),
         ]
+
+    def __str__(self):
+        return f'"{self.user}" подписался на "{self.following}"'
